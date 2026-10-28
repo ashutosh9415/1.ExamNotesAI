@@ -1,0 +1,47 @@
+import express from "express"
+import dotenv from "dotenv"
+import connectDB from "./utils/connectDB.js"
+import authRouter from "./routes/auth.route.js"
+import cookieParser from "cookie-parser"
+import cors from "cors"
+import userRouter from "./routes/user.route.js"
+import notesRouter from "./routes/genrate.route.js"
+import pdfRouter from "./routes/pdf.route.js"
+import creditRouter from "./routes/credits.route.js"
+import { stripewebhook } from "./controllers/credits.controller.js"
+dotenv.config()
+
+
+const app = express()
+
+app.post(
+    "/api/credits/webhook",
+    express.raw({ type: "application/json" }),
+    stripewebhook
+);
+
+app.use(cors(
+    {origin:"http://localhost:5173",
+        credentials:true,
+        methods:["GET","POST","PUT","DELETE"]
+    }
+))
+
+
+app.use(express.json())
+app.use(cookieParser())
+const PORT = process.env.PORT || 5000
+app.get("/", (req, res) => {
+    res.json({ message: "ExamNotes AI Backend Running" })
+})
+
+app.use("/api/auth", authRouter)
+app.use("/api/user", userRouter)
+app.use("/api/notes", notesRouter)
+app.use("/api/pdf", pdfRouter)
+app.use("/api/credits",creditRouter)
+
+app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`)
+    await connectDB()
+})
